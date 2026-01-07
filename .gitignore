@@ -8,3 +8,16 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
+
+###> Security: Environment Files ###
+# Ignore all .env files (except examples)
+.env
+.env.dev
+.env.prod
+.env.staging
+.env.testing
+# Keep example files
+!.env.example
+!.env.dev.example
+!.env.prod.example
+###< Security: Environment Files ###

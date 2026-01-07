@@ -40,20 +40,36 @@ composer install
 ```
 
 ### 2. Environment Setup
-The application is pre-configured with SQLite for development. For production, update `.env` with:
+**⚠️ IMPORTANT: Never commit .env files with real secrets!**
+
+Copy the example environment files and configure your secrets:
 
 ```bash
-# Production Database (MySQL)
-DATABASE_URL="mysql://user:password@host:port/database?serverVersion=8.0"
+# Copy example files (these are safe to commit)
+cp .env.example .env
+cp .env.dev.example .env.dev
 
-# Redis (for caching/sessions)
-REDIS_URL="redis://host:port"
+# Edit with your actual values (never commit these!)
+nano .env
+nano .env.dev
+```
 
-# Cloudflare R2 (for file storage)
+**Required Environment Variables:**
+```bash
+# Application
+APP_ENV=dev
+APP_SECRET=your-unique-secret-here
+
+# Database (SQLite for dev, MySQL for production)
+DATABASE_URL="sqlite:///%kernel.project_dir%/var/data.db"
+
+# Redis (for caching and sessions)
+REDIS_URL="redis://127.0.0.1:6379"
+
+# Cloudflare R2 (for file storage - required for uploads)
 CLOUDFLARE_R2_ENDPOINT="https://your-account-id.r2.cloudflarestorage.com"
-CLOUDFLARE_R2_REGION="auto"
-CLOUDFLARE_R2_ACCESS_KEY="your-access-key"
-CLOUDFLARE_R2_SECRET_KEY="your-secret-key"
+CLOUDFLARE_R2_ACCESS_KEY="your-r2-access-key"
+CLOUDFLARE_R2_SECRET_KEY="your-r2-secret-key"
 CLOUDFLARE_R2_BUCKET="trello-attachments"
 ```
 
@@ -78,6 +94,35 @@ php bin/console cache:clear && symfony serve --daemon
 ```
 
 **Visit `https://symfonytest.test` to access the application!** 🎉
+
+### 🔒 Security Notes
+- `.env` files contain sensitive information and are **never committed** to git
+- Use `.env.example` files to document required environment variables
+- Rotate secrets if they were ever accidentally committed
+- Laravel Cloud manages environment variables securely in production
+
+## 🔐 Security Best Practices
+
+### Environment Variables
+- ✅ **Use .env.example** files for documentation
+- ❌ **Never commit .env** files with real values
+- 🔄 **Rotate secrets** if accidentally exposed
+- 🌐 **Laravel Cloud** handles secrets securely
+
+### Sensitive Data in This Repo
+This repository contains **only placeholder values**. Real secrets are:
+- Managed by Laravel Cloud environment variables
+- Stored locally in untracked `.env` files
+- Never committed to version control
+
+### Checking for Exposed Secrets
+```bash
+# Check if secrets were ever committed (run this periodically)
+git log --oneline -p | grep -E "(SECRET|KEY|PASSWORD|TOKEN)" | head -5
+
+# Verify .env files are ignored
+git status --ignored | grep "\.env"
+```
 
 ## 🎮 Usage
 
