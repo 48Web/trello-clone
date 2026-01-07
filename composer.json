@@ -18,6 +18,7 @@
         "symfony/framework-bundle": "8.0.*",
         "symfony/maker-bundle": "^1.65",
         "symfony/messenger": "8.0.*",
+        "symfony/monolog-bundle": "*",
         "symfony/runtime": "8.0.*",
         "symfony/scheduler": "8.0.*",
         "symfony/serializer": "8.0.*",

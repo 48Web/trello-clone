@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Service\AppLogger;
 use App\Service\CloudflareR2Client;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -21,6 +22,7 @@ class HealthCheckCommand extends Command
     public function __construct(
         private Connection $connection,
         private CloudflareR2Client $r2Client,
+        private AppLogger $logger,
     ) {
         parent::__construct();
     }
@@ -28,6 +30,11 @@ class HealthCheckCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+        $startTime = microtime(true);
+
+        $this->logger->schedulerStart('health_check', [
+            'command' => 'app:health:check',
+        ]);
 
         $io->title('System Health Check');
         $io->info('Checking system components...');
@@ -41,10 +48,12 @@ class HealthCheckCommand extends Command
             $this->connection->executeQuery('SELECT 1')->fetchOne();
             $io->success('✅ Database connection: OK');
             $checks['database'] = '✅ OK';
+            $this->logger->healthCheck('database', 'success');
         } catch (\Exception $e) {
             $io->error("❌ Database connection: FAILED ({$e->getMessage()})");
             $checks['database'] = '❌ FAILED';
             $allPassed = false;
+            $this->logger->healthCheck('database', 'error', ['error' => $e->getMessage()]);
         }
 
         // Redis check
@@ -57,10 +66,12 @@ class HealthCheckCommand extends Command
             $redis->close();
             $io->success('✅ Redis connection: OK');
             $checks['redis'] = '✅ OK';
+            $this->logger->healthCheck('redis', 'success');
         } catch (\Exception $e) {
             $io->error("❌ Redis connection: FAILED ({$e->getMessage()})");
             $checks['redis'] = '❌ FAILED';
             $allPassed = false;
+            $this->logger->healthCheck('redis', 'error', ['error' => $e->getMessage()]);
         }
 
         // R2 Storage check
@@ -71,9 +82,11 @@ class HealthCheckCommand extends Command
             $filesystem->listContents('', false);
             $io->success('✅ R2 storage connection: OK');
             $checks['r2'] = '✅ OK';
+            $this->logger->healthCheck('r2_storage', 'success');
         } catch (\Exception $e) {
             $io->warning("⚠️ R2 storage connection: LIMITED ({$e->getMessage()})");
             $checks['r2'] = '⚠️ LIMITED';
+            $this->logger->healthCheck('r2_storage', 'warning', ['error' => $e->getMessage()]);
         }
 
         // Disk space check
@@ -116,10 +129,20 @@ class HealthCheckCommand extends Command
             array_map(fn($component, $status) => [$component, $status], array_keys($checks), $checks)
         );
 
+        $duration = microtime(true) - $startTime;
+
         if ($allPassed) {
+            $this->logger->schedulerSuccess('health_check', $duration, [
+                'checks_passed' => count(array_filter($checks, fn($status) => str_contains($status, '✅'))),
+                'total_checks' => count($checks),
+            ]);
             $io->success('🎉 All health checks passed! System is healthy.');
             return Command::SUCCESS;
         } else {
+            $this->logger->schedulerError('health_check', 'Some health checks failed', [
+                'failed_checks' => array_filter($checks, fn($status) => str_contains($status, '❌')),
+                'total_checks' => count($checks),
+            ]);
             $io->error('⚠️ Some health checks failed. Please review the issues above.');
             return Command::FAILURE;
         }

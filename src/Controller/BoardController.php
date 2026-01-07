@@ -8,6 +8,7 @@ use App\Entity\Board;
 use App\Entity\BoardList;
 use App\Entity\User;
 use App\Repository\BoardRepository;
+use App\Service\AppLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,6 +24,7 @@ final class BoardController extends AbstractController
         private BoardRepository $boardRepository,
         private EntityManagerInterface $entityManager,
         private SerializerInterface $serializer,
+        private AppLogger $logger,
     ) {}
 
     #[Route('', name: 'board_list', methods: ['GET'])]
@@ -38,9 +40,18 @@ final class BoardController extends AbstractController
     #[Route('', name: 'board_create', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
+        $startTime = microtime(true);
         $data = json_decode($request->getContent(), true);
 
+        $this->logger->apiRequest('POST', '/api/boards', [
+            'title' => $data['title'] ?? null,
+            'description' => $data['description'] ?? null,
+        ]);
+
         if (!isset($data['title'])) {
+            $this->logger->apiResponse('POST', '/api/boards', Response::HTTP_BAD_REQUEST, [
+                'error' => 'Title is required',
+            ]);
             return $this->json(['error' => 'Title is required'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -79,6 +90,22 @@ final class BoardController extends AbstractController
 
         // Refresh the board to load the new list relationship
         $this->entityManager->refresh($board);
+
+        $duration = microtime(true) - $startTime;
+        $this->logger->performance('board_create', $duration, [
+            'board_id' => $board->getId(),
+            'title' => $board->getTitle(),
+        ]);
+
+        $this->logger->userAction('board_created', null, [
+            'board_id' => $board->getId(),
+            'board_title' => $board->getTitle(),
+        ]);
+
+        $this->logger->apiResponse('POST', '/api/boards', Response::HTTP_CREATED, [
+            'board_id' => $board->getId(),
+            'lists_count' => $board->getLists()->count(),
+        ]);
 
         return $this->json($board, Response::HTTP_CREATED, [], [
             'groups' => ['board:read']

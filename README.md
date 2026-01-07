@@ -123,6 +123,60 @@ For production deployment, add this cron job:
 
 All commands include proper error handling, logging, and progress reporting.
 
+## 📊 Logging System
+
+The application implements comprehensive logging for Laravel Cloud monitoring:
+
+### Log Files
+- `var/log/app.log` - General application logs
+- `var/log/laravel-cloud.log` - JSON formatted logs for Laravel Cloud
+- `var/log/error.log` - Error-only logs
+
+### Log Types
+- **API Requests/Responses** - All API calls with performance metrics
+- **User Actions** - Board creation, updates, deletions
+- **Scheduled Jobs** - Job execution, success/failure, duration
+- **Health Checks** - System component monitoring
+- **Performance** - Operation timing and bottlenecks
+- **Security Events** - Access patterns and anomalies
+
+### Laravel Cloud Compatible
+JSON-formatted logs include:
+```json
+{
+  "message": "API Response: POST /api/boards - 201",
+  "context": {
+    "board_id": 6,
+    "lists_count": 1,
+    "api_method": "POST",
+    "api_endpoint": "/api/boards",
+    "status_code": 201,
+    "timestamp": "2026-01-07T19:31:36+00:00",
+    "request_id": "req_695eb498c74735.96906820",
+    "user_agent": "curl/8.7.1",
+    "url": "/api/boards",
+    "method": "POST"
+  },
+  "level": 200,
+  "level_name": "INFO",
+  "channel": "app",
+  "datetime": "2026-01-07T19:31:36.816246+00:00"
+}
+```
+
+### Log Analysis
+Use these commands to analyze logs:
+```bash
+# View recent API requests
+tail -f var/log/app.log | grep "API"
+
+# Monitor health checks
+tail -f var/log/app.log | grep "Health Check"
+
+# Check performance bottlenecks
+grep "Performance:" var/log/app.log | sort -k 10 -n
+```
+
 ## 📡 API Endpoints
 
 ### Boards
