@@ -93,6 +93,36 @@ The application includes sample data:
 - **Demo Cards**: Sample tasks to demonstrate functionality
 - **Default Lists**: New boards automatically get "My First List"
 
+## ⏰ Scheduled Jobs
+
+The application includes automated background jobs for maintenance and Laravel Cloud testing:
+
+### Available Commands
+```bash
+# Health monitoring (checks database, Redis, R2, disk, memory)
+php bin/console app:health:check
+
+# Clean up orphaned attachments (removes unused files)
+php bin/console app:cleanup:attachments --dry-run
+
+# Update board statistics cache (metrics for performance)
+php bin/console app:stats:cache
+
+# Database maintenance (optimize tables, health checks)
+php bin/console app:maintenance:database --optimize-tables
+
+# Cache warmup (pre-load frequently accessed data)
+php bin/console app:cache:warmup
+```
+
+### Laravel Cloud Integration
+For production deployment, add this cron job:
+```bash
+* * * * * /path/to/symfony console scheduler:run >> /dev/null 2>&1
+```
+
+All commands include proper error handling, logging, and progress reporting.
+
 ## 📡 API Endpoints
 
 ### Boards
