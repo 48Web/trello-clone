@@ -1,0 +1,8 @@
+flysystem:
+    storages:
+        default.storage:
+            adapter: 'aws'
+            options:
+                client: 'App\Service\CloudflareR2Client'
+                bucket: '%env(CLOUDFLARE_R2_BUCKET)%'
+                prefix: 'uploads'

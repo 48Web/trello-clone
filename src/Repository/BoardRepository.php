@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repository;
+
+use App\Entity\Board;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Board>
+ */
+class BoardRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Board::class);
+    }
+
+    /**
+     * @return Board[] Returns an array of Board objects ordered by position
+     */
+    public function findAllOrdered(): array
+    {
+        return $this->createQueryBuilder('b')
+            ->orderBy('b.position', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+}
