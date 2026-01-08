@@ -18,8 +18,9 @@ final class FrontendController extends AbstractController
     #[Route('/', name: 'dashboard')]
     public function dashboard(): Response
     {
-        // Standard Symfony logging
+        // Multiple logging methods for Laravel Cloud testing
         $this->logger->info('Dashboard accessed');
+        error_log('Dashboard: Page loaded');
 
         return $this->render('dashboard.html.twig');
     }
@@ -29,9 +30,25 @@ final class FrontendController extends AbstractController
     {
         // Standard Symfony logging
         $this->logger->info('Board view accessed', ['board_id' => $id]);
+        error_log('Board view: Loading board ' . $id);
 
         return $this->render('board.html.twig', [
             'boardId' => $id,
+        ]);
+    }
+
+    #[Route('/test-log', name: 'test_log')]
+    public function testLog(): Response
+    {
+        // Multiple logging methods for Laravel Cloud testing
+        $this->logger->info('HTTP LOG TEST: Manual test triggered');
+        $this->logger->warning('HTTP LOG TEST: Warning level');
+        error_log('HTTP LOG TEST: Direct error_log call');
+
+        return $this->json([
+            'message' => 'Log test completed',
+            'timestamp' => (new \DateTime())->format('c'),
+            'methods_tested' => ['logger', 'error_log']
         ]);
     }
 }

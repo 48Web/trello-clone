@@ -42,8 +42,9 @@ final class BoardController extends AbstractController
     {
         $startTime = microtime(true);
 
-        // Standard Symfony logging
+        // Multiple logging methods for Laravel Cloud testing
         $this->logger->info('Board creation request received');
+        error_log('Board creation: Processing request');
 
         $data = json_decode($request->getContent(), true);
 
