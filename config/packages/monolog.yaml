@@ -1,7 +1,4 @@
 monolog:
-    formatters:
-        json_formatter:
-            type: json
     handlers:
         main:
             type: fingers_crossed
