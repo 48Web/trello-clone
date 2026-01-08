@@ -34,4 +34,19 @@ final class FrontendController extends AbstractController
             'boardId' => $id,
         ]);
     }
+
+    #[Route('/test-log', name: 'test_log')]
+    public function testLog(): Response
+    {
+        // Multiple logging methods for Laravel Cloud testing
+        $this->logger->info('HTTP LOG TEST: Manual test triggered from controller');
+        $this->logger->warning('HTTP LOG TEST: Warning level test');
+        error_log('HTTP LOG TEST: Direct error_log call');
+
+        return $this->json([
+            'message' => 'Log test completed',
+            'timestamp' => (new \DateTime())->format('c'),
+            'logged' => true
+        ]);
+    }
 }
