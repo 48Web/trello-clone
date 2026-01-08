@@ -26,3 +26,17 @@ services:
     App\Service\AppLogger:
         arguments:
             - '@monolog.logger'
+
+    # Laravel Cloud Redis client with TLS support
+    redis_client:
+        class: Predis\Client
+        arguments:
+            -
+                scheme: tls
+                host: '%env(REDIS_HOST)%'
+                port: '%env(REDIS_PORT)%'
+                password: '%env(REDIS_PASSWORD)%'
+                database: '%env(REDIS_DB)%'
+                tls:
+                    verify_peer: false
+                    verify_peer_name: false

@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Repository\BoardRepository;
-use Symfony\Component\Cache\Adapter\RedisAdapter;
+use Predis\Client;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Contracts\Cache\ItemInterface;
 
 #[AsCommand(
     name: 'app:stats:cache',
@@ -73,11 +73,20 @@ class BoardStatisticsCommand extends Command
         $progressBar->finish();
         $io->newLine(2);
 
-        // Try to cache the statistics in Redis
+        // Try to cache the statistics using Symfony cache
         try {
-            $cache = RedisAdapter::createConnection($_ENV['REDIS_URL'] ?? 'redis://127.0.0.1:6379');
-            $redis = new \Redis();
-            $redis->connect(parse_url($cache, PHP_URL_HOST), parse_url($cache, PHP_URL_PORT));
+            // Use Predis client directly for custom caching
+            $redis = new Client([
+                'scheme' => 'tls',
+                'host' => $_ENV['REDIS_HOST'] ?? '127.0.0.1',
+                'port' => $_ENV['REDIS_PORT'] ?? 6379,
+                'password' => $_ENV['REDIS_PASSWORD'] ?? null,
+                'database' => $_ENV['REDIS_DB'] ?? 0,
+                'tls' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                ]
+            ]);
 
             $redis->set('trello:stats:last_update', time());
             $redis->set('trello:stats:data', json_encode($stats));

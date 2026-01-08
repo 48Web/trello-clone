@@ -12,6 +12,7 @@
         "doctrine/orm": "^3.6",
         "league/flysystem-aws-s3-v3": "^3.30",
         "league/flysystem-bundle": "^3.6",
+        "predis/predis": "^3.3",
         "symfony/console": "8.0.*",
         "symfony/dotenv": "8.0.*",
         "symfony/flex": "^2",
