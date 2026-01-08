@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Service\Log;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,8 +18,7 @@ final class FrontendController extends AbstractController
     #[Route('/', name: 'dashboard')]
     public function dashboard(): Response
     {
-        // Laravel-style logging
-        Log::info('Dashboard accessed');
+        // Standard Symfony logging
         $this->logger->info('Dashboard accessed');
 
         return $this->render('dashboard.html.twig');
@@ -29,8 +27,7 @@ final class FrontendController extends AbstractController
     #[Route('/boards/{id}', name: 'board_view')]
     public function board(int $id): Response
     {
-        // Laravel-style logging
-        Log::info('Board view accessed', ['board_id' => $id]);
+        // Standard Symfony logging
         $this->logger->info('Board view accessed', ['board_id' => $id]);
 
         return $this->render('board.html.twig', [
