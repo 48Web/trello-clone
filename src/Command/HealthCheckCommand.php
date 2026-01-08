@@ -22,6 +22,7 @@ class HealthCheckCommand extends Command
 {
     public function __construct(
         private Connection $connection,
+        private Client $redisClient,
         private CloudflareR2Client $r2Client,
         private AppLogger $logger,
     ) {
@@ -60,51 +61,12 @@ class HealthCheckCommand extends Command
         // Redis check
         $io->section('Redis Check');
         try {
-            $redis = null;
-            $connectionType = 'unknown';
-
-            // Try Laravel Cloud Redis first if configured
-            if ($_ENV['REDIS_HOST'] ?? false) {
-                try {
-                    $redis = new Client([
-                        'scheme' => 'tls',
-                        'host' => $_ENV['REDIS_HOST'],
-                        'port' => (int) $_ENV['REDIS_PORT'],
-                        'password' => $_ENV['REDIS_PASSWORD'],
-                        'database' => (int) ($_ENV['REDIS_DB'] ?? 0),
-                        'tls' => [
-                            'verify_peer' => false,
-                            'verify_peer_name' => false,
-                        ],
-                    ]);
-                    $redis->ping();
-                    $connectionType = 'Laravel Cloud (TLS)';
-                } catch (\Exception $cloudException) {
-                    // Laravel Cloud failed, try local Redis as fallback
-                    $io->warning('Laravel Cloud Redis failed, trying local Redis...');
-                    $redis = new Client([
-                        'scheme' => 'tcp',
-                        'host' => '127.0.0.1',
-                        'port' => 6379,
-                    ]);
-                    $redis->ping();
-                    $connectionType = 'Local (fallback)';
-                }
-            } else {
-                // No Laravel Cloud config, use local Redis
-                $redis = new Client([
-                    'scheme' => 'tcp',
-                    'host' => '127.0.0.1',
-                    'port' => 6379,
-                ]);
-                $redis->ping();
-                $connectionType = 'Local';
-            }
-
-            $redis->disconnect();
-            $io->success("✅ Redis connection: OK ({$connectionType})");
+            // Uses Predis configured via Symfony's standard REDIS_URL.
+            $this->redisClient->ping();
+            $this->redisClient->disconnect();
+            $io->success('✅ Redis connection: OK (REDIS_URL)');
             $checks['redis'] = '✅ OK';
-            $this->logger->healthCheck('redis', 'success', ['connection_type' => $connectionType]);
+            $this->logger->healthCheck('redis', 'success', ['connection_type' => 'REDIS_URL']);
         } catch (\Exception $e) {
             $io->error("❌ Redis connection: FAILED ({$e->getMessage()})");
             $checks['redis'] = '❌ FAILED';

@@ -21,6 +21,7 @@ class BoardStatisticsCommand extends Command
 {
     public function __construct(
         private BoardRepository $boardRepository,
+        private Client $redisClient,
     ) {
         parent::__construct();
     }
@@ -75,21 +76,9 @@ class BoardStatisticsCommand extends Command
 
         // Try to cache the statistics using Symfony cache
         try {
-            // Use Predis client directly for custom caching
-            $redis = new Client([
-                'scheme' => 'tls',
-                'host' => $_ENV['REDIS_HOST'] ?? '127.0.0.1',
-                'port' => $_ENV['REDIS_PORT'] ?? 6379,
-                'password' => $_ENV['REDIS_PASSWORD'] ?? null,
-                'database' => $_ENV['REDIS_DB'] ?? 0,
-                'tls' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
-                ]
-            ]);
-
-            $redis->set('trello:stats:last_update', time());
-            $redis->set('trello:stats:data', json_encode($stats));
+            $this->redisClient->set('trello:stats:last_update', time());
+            $this->redisClient->set('trello:stats:data', json_encode($stats));
+            $this->redisClient->disconnect();
 
             $io->success('Statistics cached successfully in Redis.');
         } catch (\Exception $e) {
