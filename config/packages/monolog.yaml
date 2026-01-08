@@ -18,7 +18,6 @@ monolog:
             type: stream
             path: 'php://stderr'
             level: info
-            formatter: monolog.formatter.json_formatter
         console:
             type: console
             process_psr_3_messages: false
