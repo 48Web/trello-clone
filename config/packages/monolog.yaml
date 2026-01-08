@@ -5,15 +5,6 @@ monolog:
             path: '%kernel.logs_dir%/app.log'
             level: debug
             channels: ['!event']
-
-        # Laravel Cloud compatible JSON logging
-        laravel_cloud:
-            type: stream
-            path: '%kernel.logs_dir%/laravel-cloud.log'
-            level: info
-            formatter: monolog.formatter.json
-            channels: ['!event']
-
         console:
             type: console
             process_psr_3_messages: false
