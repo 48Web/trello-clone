@@ -2,8 +2,8 @@ monolog:
     handlers:
         main:
             type: stream
-            path: '%kernel.logs_dir%/app.log'
-            level: debug
+            path: 'php://stderr'  # Laravel Cloud compatible - sends to log stream
+            level: info  # Changed from debug to info for Laravel Cloud
             channels: ['!event']
         console:
             type: console
