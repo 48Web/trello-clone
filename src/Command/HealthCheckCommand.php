@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Service\AppLogger;
 use App\Service\CloudflareR2Client;
 use Doctrine\DBAL\Connection;
+use Predis\Client;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -59,14 +60,51 @@ class HealthCheckCommand extends Command
         // Redis check
         $io->section('Redis Check');
         try {
-            $redisUrl = $_ENV['REDIS_URL'] ?? 'redis://127.0.0.1:6379';
-            $redis = new \Redis();
-            $redis->connect(parse_url($redisUrl, PHP_URL_HOST), parse_url($redisUrl, PHP_URL_PORT));
-            $redis->ping();
-            $redis->close();
-            $io->success('✅ Redis connection: OK');
+            $redis = null;
+            $connectionType = 'unknown';
+
+            // Try Laravel Cloud Redis first if configured
+            if ($_ENV['REDIS_HOST'] ?? false) {
+                try {
+                    $redis = new Client([
+                        'scheme' => 'tls',
+                        'host' => $_ENV['REDIS_HOST'],
+                        'port' => (int) $_ENV['REDIS_PORT'],
+                        'password' => $_ENV['REDIS_PASSWORD'],
+                        'database' => (int) ($_ENV['REDIS_DB'] ?? 0),
+                        'tls' => [
+                            'verify_peer' => false,
+                            'verify_peer_name' => false,
+                        ],
+                    ]);
+                    $redis->ping();
+                    $connectionType = 'Laravel Cloud (TLS)';
+                } catch (\Exception $cloudException) {
+                    // Laravel Cloud failed, try local Redis as fallback
+                    $io->warning('Laravel Cloud Redis failed, trying local Redis...');
+                    $redis = new Client([
+                        'scheme' => 'tcp',
+                        'host' => '127.0.0.1',
+                        'port' => 6379,
+                    ]);
+                    $redis->ping();
+                    $connectionType = 'Local (fallback)';
+                }
+            } else {
+                // No Laravel Cloud config, use local Redis
+                $redis = new Client([
+                    'scheme' => 'tcp',
+                    'host' => '127.0.0.1',
+                    'port' => 6379,
+                ]);
+                $redis->ping();
+                $connectionType = 'Local';
+            }
+
+            $redis->disconnect();
+            $io->success("✅ Redis connection: OK ({$connectionType})");
             $checks['redis'] = '✅ OK';
-            $this->logger->healthCheck('redis', 'success');
+            $this->logger->healthCheck('redis', 'success', ['connection_type' => $connectionType]);
         } catch (\Exception $e) {
             $io->error("❌ Redis connection: FAILED ({$e->getMessage()})");
             $checks['redis'] = '❌ FAILED';

@@ -3,10 +3,11 @@ framework:
         # Unique name of your app: used to compute stable namespaces for cache keys.
         prefix_seed: trello_clone
 
-        # Redis cache configuration with Laravel Cloud support
+        # Redis cache configuration with Laravel Cloud support and fallback
         app: cache.adapter.redis
 
         # Use Predis for Laravel Cloud Redis TLS support
+        # Falls back gracefully if Laravel Cloud Redis is not available
         default_redis_provider: '%env(REDIS_URL)%'
 
         # Doctrine cache pools
