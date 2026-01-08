@@ -8,7 +8,7 @@ monolog:
             channels: ['!event']
         grouped:
             type: group
-            members: [nested, stderr]
+            members: [nested, stderr, laravel_cloud]
         nested:
             type: rotating_file
             path: '%kernel.logs_dir%/%kernel.environment%.log'
@@ -17,6 +17,10 @@ monolog:
         stderr:
             type: stream
             path: 'php://stderr'
+            level: info
+        laravel_cloud:
+            type: stream
+            path: '%kernel.project_dir%/storage/logs/symfony.log'
             level: info
         console:
             type: console
