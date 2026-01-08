@@ -1,4 +1,7 @@
 monolog:
+    formatters:
+        json:
+            type: json
     handlers:
         main:
             type: fingers_crossed
@@ -18,6 +21,7 @@ monolog:
             type: stream
             path: 'php://stderr'
             level: info
+            formatter: json
         console:
             type: console
             process_psr_3_messages: false
