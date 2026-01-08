@@ -34,6 +34,9 @@ class HealthCheckCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $startTime = microtime(true);
 
+        // Laravel-style logging
+        $this->logger->info('Health check command executed');
+
         $this->logger->schedulerStart('health_check', [
             'command' => 'app:health:check',
         ]);

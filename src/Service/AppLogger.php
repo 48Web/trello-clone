@@ -10,7 +10,10 @@ class AppLogger
 {
     public function __construct(
         private LoggerInterface $logger,
-    ) {}
+    ) {
+        // Initialize Laravel-style Log facade
+        Log::setLogger($logger);
+    }
 
     // Application-level logging
     public function info(string $message, array $context = []): void

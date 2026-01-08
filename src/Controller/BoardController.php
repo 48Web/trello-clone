@@ -9,6 +9,7 @@ use App\Entity\BoardList;
 use App\Entity\User;
 use App\Repository\BoardRepository;
 use App\Service\AppLogger;
+use App\Service\Log;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -41,6 +42,11 @@ final class BoardController extends AbstractController
     public function create(Request $request): JsonResponse
     {
         $startTime = microtime(true);
+
+        // Laravel-style logging
+        Log::info('Board creation request received');
+        $this->logger->info('Board creation request received');
+
         $data = json_decode($request->getContent(), true);
 
         $this->logger->apiRequest('POST', '/api/boards', [
