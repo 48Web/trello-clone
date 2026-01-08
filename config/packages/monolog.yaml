@@ -1,4 +1,7 @@
 monolog:
+    formatters:
+        json_formatter:
+            type: json
     handlers:
         main:
             type: fingers_crossed
@@ -18,10 +21,7 @@ monolog:
             type: stream
             path: 'php://stderr'
             level: info
-        laravel_cloud:
-            type: stream
-            path: '%kernel.project_dir%/storage/logs/symfony.log'
-            level: info
+            formatter: json_formatter
         console:
             type: console
             process_psr_3_messages: false
