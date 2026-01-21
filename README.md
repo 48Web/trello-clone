@@ -166,9 +166,9 @@ php bin/console app:cache:warmup
 ```
 
 ### Laravel Cloud Integration
-For production deployment, add this cron job:
+If you only have Laravel Cloud's scheduler (no Messenger worker), schedule the command directly:
 ```bash
-* * * * * /path/to/symfony console scheduler:run >> /dev/null 2>&1
+* * * * * /path/to/symfony/bin/console app:scheduler:heartbeat --message="Scheduler heartbeat: say something plz" >> /dev/null 2>&1
 ```
 
 All commands include proper error handling, logging, and progress reporting.
