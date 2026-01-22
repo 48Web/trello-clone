@@ -24,6 +24,7 @@ class SchedulerHeartbeatCommand extends Command
     public function __construct(
         #[Autowire(service: 'monolog.logger.scheduler')]
         private LoggerInterface $logger,
+        #[Autowire(service: 'cache.scheduler_debug_cache_pool')]
         private CacheInterface $cache,
     ) {
         parent::__construct();

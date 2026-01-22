@@ -16,3 +16,5 @@ framework:
                 adapter: cache.adapter.redis
             doctrine.system_cache_pool:
                 adapter: cache.adapter.redis
+            scheduler_debug_cache_pool:
+                adapter: cache.adapter.filesystem
