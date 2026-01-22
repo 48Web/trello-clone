@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Command;
 
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -22,6 +24,7 @@ class SchedulerHeartbeatCommand extends Command
     public function __construct(
         #[Autowire(service: 'monolog.logger.scheduler')]
         private LoggerInterface $logger,
+        private CacheInterface $cache,
     ) {
         parent::__construct();
     }
@@ -36,9 +39,22 @@ class SchedulerHeartbeatCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $message = (string) $input->getOption('message');
 
+        $payload = [
+            'message' => $message,
+            'ran_at' => date('c'),
+        ];
+
         $this->logger->info($message, [
             'job_name' => 'scheduler_heartbeat',
         ]);
+
+        // Store last run in cache so we can verify scheduling without logs.
+        $this->cache->delete('scheduler_heartbeat_last_run');
+        $this->cache->get('scheduler_heartbeat_last_run', function (ItemInterface $item) use ($payload): array {
+            $item->expiresAfter(86400);
+
+            return $payload;
+        });
 
         $io->success('Scheduler heartbeat logged.');
 
