@@ -11,7 +11,7 @@ use Symfony\Component\Scheduler\Schedule as SymfonySchedule;
 use Symfony\Component\Scheduler\ScheduleProviderInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 
-#[AsSchedule]
+#[AsSchedule('scheduler_default')]
 class Schedule implements ScheduleProviderInterface
 {
     public function __construct(
