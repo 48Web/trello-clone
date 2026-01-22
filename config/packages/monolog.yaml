@@ -25,8 +25,47 @@ monolog:
             process_psr_3_messages: false
             channels: ['!event', '!doctrine']
         scheduler:
+            type: group
+            members: [scheduler_file, scheduler_stderr]
+            channels: ['scheduler']
+        scheduler_file:
             type: stream
             path: '%kernel.logs_dir%/scheduler.log'
             level: info
             formatter: monolog.formatter.json_formatter
-            channels: ['scheduler']
+        scheduler_stderr:
+            type: stream
+            path: 'php://stderr'
+            level: info
+            formatter: monolog.formatter.json_formatter
+
+when@prod:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: error
+                handler: nested
+                excluded_http_codes: [404, 405]
+                channels: ['!deprecation']
+                buffer_size: 50
+            nested:
+                type: stream
+                path: 'php://stderr'
+                level: debug
+                formatter: monolog.formatter.json_formatter
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ['!event', '!doctrine']
+            deprecation:
+                type: stream
+                channels: [deprecation]
+                path: 'php://stderr'
+                formatter: monolog.formatter.json_formatter
+            scheduler:
+                type: stream
+                path: 'php://stderr'
+                level: info
+                formatter: monolog.formatter.json_formatter
+                channels: ['scheduler']
