@@ -1,5 +1,5 @@
 monolog:
-    channels: ['scheduler']
+    channels: ['scheduler', 'deprecation']
     handlers:
         main:
             type: fingers_crossed
@@ -41,6 +41,7 @@ monolog:
 
 when@prod:
     monolog:
+        channels: ['scheduler', 'deprecation']
         handlers:
             main:
                 type: fingers_crossed
