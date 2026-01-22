@@ -13,7 +13,7 @@ use Symfony\Contracts\Cache\CacheInterface;
 class SchedulerDebugController extends AbstractController
 {
     public function __construct(
-        #[Autowire(service: 'cache.scheduler_debug_cache_pool')]
+        #[Autowire(service: 'scheduler_debug_cache_pool')]
         private CacheInterface $cache,
     ) {
     }
