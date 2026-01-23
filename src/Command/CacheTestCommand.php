@@ -11,8 +11,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Contracts\Cache\CacheItemInterface;
-use Symfony\Contracts\Cache\CacheItemPoolInterface;
 
 #[AsCommand(
     name: 'app:cache:test',
