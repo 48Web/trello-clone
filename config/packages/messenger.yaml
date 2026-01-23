@@ -8,6 +8,7 @@ framework:
             # async: '%env(MESSENGER_TRANSPORT_DSN)%'
             # failed: 'doctrine://default?queue_name=failed'
             scheduler: 'schedule://scheduler_default'
+            scheduler_default: 'schedule://scheduler_default'
             sync: 'sync://'
 
         routing:
