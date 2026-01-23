@@ -66,30 +66,38 @@ class CacheTestCommand extends Command
         $this->cache->deleteItem($key);
 
         $io->section('Redis metrics');
-        try {
-            $ping = $this->redisClient->ping();
-            $info = $this->redisClient->info();
-            $dbSize = $this->redisClient->dbsize();
+        $metrics = [];
 
+        try {
+            $metrics[] = ['Ping', (string) $this->redisClient->ping()];
+        } catch (\Throwable $exception) {
+            $metrics[] = ['Ping', 'n/a (' . $exception->getMessage() . ')'];
+        }
+
+        try {
+            $metrics[] = ['DB Size', (string) $this->redisClient->dbsize()];
+        } catch (\Throwable $exception) {
+            $metrics[] = ['DB Size', 'n/a (' . $exception->getMessage() . ')'];
+        }
+
+        try {
+            $info = $this->redisClient->info();
             $memory = $info['Memory'] ?? $info['memory'] ?? [];
             $stats = $info['Stats'] ?? $info['stats'] ?? [];
             $keyspace = $info['Keyspace'] ?? $info['keyspace'] ?? [];
 
-            $io->table(
-                ['Metric', 'Value'],
-                [
-                    ['Ping', (string) $ping],
-                    ['DB Size', (string) $dbSize],
-                    ['Memory Used', (string) ($memory['used_memory_human'] ?? 'n/a')],
-                    ['Peak Memory', (string) ($memory['used_memory_peak_human'] ?? 'n/a')],
-                    ['Total Commands', (string) ($stats['total_commands_processed'] ?? 'n/a')],
-                    ['Keyspace', is_array($keyspace) ? json_encode($keyspace, JSON_THROW_ON_ERROR) : (string) $keyspace],
-                ]
-            );
+            $metrics[] = ['Memory Used', (string) ($memory['used_memory_human'] ?? 'n/a')];
+            $metrics[] = ['Peak Memory', (string) ($memory['used_memory_peak_human'] ?? 'n/a')];
+            $metrics[] = ['Total Commands', (string) ($stats['total_commands_processed'] ?? 'n/a')];
+            $metrics[] = [
+                'Keyspace',
+                is_array($keyspace) ? json_encode($keyspace, JSON_THROW_ON_ERROR) : (string) $keyspace
+            ];
         } catch (\Throwable $exception) {
-            $io->warning('Redis metrics unavailable');
-            $io->text($exception->getMessage());
+            $metrics[] = ['INFO', 'n/a (' . $exception->getMessage() . ')'];
         }
+
+        $io->table(['Metric', 'Value'], $metrics);
 
         $io->success('Cache test completed.');
 
