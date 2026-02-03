@@ -8,6 +8,7 @@ use App\Entity\Attachment;
 use App\Entity\Card;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\FilesystemOperator;
+use League\Flysystem\UnableToGenerateTemporaryUrl;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -85,6 +86,23 @@ final class AttachmentController extends AbstractController
     {
         return $this->json($attachment, Response::HTTP_OK, [], [
             'groups' => ['attachment:read']
+        ]);
+    }
+
+    #[Route('/attachments/{id}/url', name: 'attachment_url', methods: ['GET'])]
+    public function url(Attachment $attachment): JsonResponse
+    {
+        $expiresAt = new \DateTimeImmutable('+15 minutes');
+
+        try {
+            $url = $this->storage->temporaryUrl($attachment->getPath(), $expiresAt);
+        } catch (UnableToGenerateTemporaryUrl $exception) {
+            return $this->json(['error' => 'Failed to generate attachment URL'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return $this->json([
+            'url' => $url,
+            'expiresAt' => $expiresAt->format(DATE_ATOM),
         ]);
     }
 
