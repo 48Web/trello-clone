@@ -4,5 +4,5 @@ flysystem:
             adapter: 'aws'
             options:
                 client: 'App\Service\CloudflareR2Client'
-                bucket: '%env(CLOUDFLARE_R2_BUCKET)%'
+                bucket: '%env(AWS_BUCKET)%'
                 prefix: 'uploads'

@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Repository\AttachmentRepository;
-use App\Service\CloudflareR2Client;
 use Doctrine\ORM\EntityManagerInterface;
+use League\Flysystem\FilesystemOperator;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCommand(
     name: 'app:cleanup:attachments',
@@ -22,7 +23,8 @@ class AttachmentCleanupCommand extends Command
 {
     public function __construct(
         private AttachmentRepository $attachmentRepository,
-        private CloudflareR2Client $r2Client,
+        #[Autowire(service: 'default.storage')]
+        private FilesystemOperator $storage,
         private EntityManagerInterface $entityManager,
     ) {
         parent::__construct();
@@ -84,9 +86,8 @@ class AttachmentCleanupCommand extends Command
         foreach ($orphanedAttachments as $attachment) {
             try {
                 // Delete from R2 storage
-                $filesystem = $this->r2Client->getFilesystem();
-                if ($filesystem->fileExists($attachment->getPath())) {
-                    $filesystem->delete($attachment->getPath());
+                if ($this->storage->fileExists($attachment->getPath())) {
+                    $this->storage->delete($attachment->getPath());
                 }
 
                 // Delete from database

@@ -6,9 +6,10 @@ namespace App\Controller;
 
 use App\Entity\Attachment;
 use App\Entity\Card;
-use App\Service\CloudflareR2Client;
 use Doctrine\ORM\EntityManagerInterface;
+use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,7 +19,8 @@ use Symfony\Component\Routing\Attribute\Route;
 final class AttachmentController extends AbstractController
 {
     public function __construct(
-        private CloudflareR2Client $r2Client,
+        #[Autowire(service: 'default.storage')]
+        private FilesystemOperator $storage,
         private EntityManagerInterface $entityManager,
     ) {}
 
@@ -46,10 +48,16 @@ final class AttachmentController extends AbstractController
 
         try {
             // Upload to R2
-            $filesystem = $this->r2Client->getFilesystem();
             $stream = fopen($file->getPathname(), 'r');
-            $filesystem->writeStream($path, $stream);
-            fclose($stream);
+            if ($stream === false) {
+                return $this->json(['error' => 'Failed to read uploaded file'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            try {
+                $this->storage->writeStream($path, $stream);
+            } finally {
+                fclose($stream);
+            }
 
             // Create attachment record
             $attachment = new Attachment();
@@ -84,8 +92,7 @@ final class AttachmentController extends AbstractController
     public function download(Attachment $attachment): Response
     {
         try {
-            $filesystem = $this->r2Client->getFilesystem();
-            $stream = $filesystem->readStream($attachment->getPath());
+            $stream = $this->storage->readStream($attachment->getPath());
 
             return new Response($stream, Response::HTTP_OK, [
                 'Content-Type' => $attachment->getMimeType(),
@@ -102,8 +109,7 @@ final class AttachmentController extends AbstractController
     {
         try {
             // Delete from R2
-            $filesystem = $this->r2Client->getFilesystem();
-            $filesystem->delete($attachment->getPath());
+            $this->storage->delete($attachment->getPath());
 
             // Delete from database
             $this->entityManager->remove($attachment);

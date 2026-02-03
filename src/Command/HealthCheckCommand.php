@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Service\AppLogger;
-use App\Service\CloudflareR2Client;
 use Doctrine\DBAL\Connection;
+use League\Flysystem\FilesystemOperator;
 use Predis\Client;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCommand(
     name: 'app:health:check',
@@ -23,7 +24,8 @@ class HealthCheckCommand extends Command
     public function __construct(
         private Connection $connection,
         private Client $redisClient,
-        private CloudflareR2Client $r2Client,
+        #[Autowire(service: 'default.storage')]
+        private FilesystemOperator $storage,
         private AppLogger $logger,
     ) {
         parent::__construct();
@@ -80,9 +82,8 @@ class HealthCheckCommand extends Command
         // R2 Storage check
         $io->section('Cloudflare R2 Check');
         try {
-            $filesystem = $this->r2Client->getFilesystem();
             // Try to list contents (will fail gracefully if bucket doesn't exist)
-            $filesystem->listContents('', false);
+            $this->storage->listContents('', false);
             $io->success('✅ R2 storage connection: OK');
             $checks['r2'] = '✅ OK';
             $this->logger->healthCheck('r2_storage', 'success');
