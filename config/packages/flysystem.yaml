@@ -3,6 +3,6 @@ flysystem:
         default.storage:
             adapter: 'aws'
             options:
-                client: 'App\Service\CloudflareR2Client'
+                client: 'app.r2_s3_client'
                 bucket: '%env(AWS_BUCKET)%'
                 prefix: 'uploads'

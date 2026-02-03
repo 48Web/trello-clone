@@ -6,9 +6,9 @@ namespace App\Service;
 
 use Aws\S3\S3Client;
 
-class CloudflareR2Client extends S3Client
+class CloudflareR2Client
 {
-    public function __construct()
+    public function createClient(): S3Client
     {
         $endpoint = $_ENV['AWS_ENDPOINT']
             ?? $_ENV['CLOUDFLARE_R2_ENDPOINT']
@@ -22,7 +22,7 @@ class CloudflareR2Client extends S3Client
             $usePathStyleEndpoint = filter_var($usePathStyle, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         }
 
-        parent::__construct([
+        return new S3Client([
             'endpoint' => $endpoint,
             'region' => $region,
             'version' => 'latest',

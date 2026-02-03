@@ -38,3 +38,8 @@ services:
             - '%env(REDIS_URL)%'
 
     Predis\Client: '@redis_client'
+
+    # Cloudflare R2 client (AWS SDK S3 client configured from AWS_* env vars)
+    app.r2_s3_client:
+        class: Aws\S3\S3Client
+        factory: ['@App\Service\CloudflareR2Client', 'createClient']
