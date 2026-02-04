@@ -46,6 +46,12 @@
         .add-card-btn:hover {
             background: #e9ecef;
         }
+        .attachment-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -267,6 +273,9 @@
                     document.getElementById('cardTitle').value = card.title;
                     document.getElementById('cardDescription').value = card.description || '';
                     document.getElementById('deleteCardBtn').style.display = 'inline-block';
+                    document.getElementById('cardAttachment').value = '';
+                    const attachmentsContainer = document.getElementById('attachments-container');
+                    attachmentsContainer.innerHTML = '<div class="text-muted small">Upload an image to test storage.</div>';
 
                     const modal = new bootstrap.Modal(document.getElementById('cardModal'));
                     modal.show();
@@ -297,11 +306,74 @@
             }
         }
 
+        async function handleAttachmentUpload(event) {
+            if (!currentCard) return;
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const attachmentsContainer = document.getElementById('attachments-container');
+
+            try {
+                const response = await fetch(`/api/cards/${currentCard.id}/attachments`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    attachmentsContainer.innerHTML = '<div class="text-danger small">Upload failed.</div>';
+                    return;
+                }
+
+                const attachment = await response.json();
+                if (!attachment.id) {
+                    attachmentsContainer.innerHTML = '<div class="text-danger small">Upload succeeded but no attachment id returned.</div>';
+                    return;
+                }
+
+                const urlResponse = await fetch(`/api/attachments/${attachment.id}/url`);
+                if (!urlResponse.ok) {
+                    attachmentsContainer.innerHTML = '<div class="text-danger small">Failed to fetch attachment URL.</div>';
+                    return;
+                }
+
+                const urlPayload = await urlResponse.json();
+                const link = document.createElement('a');
+                link.href = urlPayload.url;
+                link.textContent = attachment.originalName || 'Attachment';
+                link.target = '_blank';
+                link.rel = 'noopener';
+
+                const item = document.createElement('div');
+                item.className = 'attachment-item';
+                item.appendChild(link);
+
+                if (urlPayload.expiresAt) {
+                    const expires = document.createElement('span');
+                    expires.className = 'text-muted small';
+                    expires.textContent = `(expires ${new Date(urlPayload.expiresAt).toLocaleString()})`;
+                    item.appendChild(expires);
+                }
+
+                if (attachmentsContainer.querySelector('.text-muted')) {
+                    attachmentsContainer.innerHTML = '';
+                }
+                attachmentsContainer.appendChild(item);
+            } catch (error) {
+                attachmentsContainer.innerHTML = '<div class="text-danger small">Upload error.</div>';
+                console.error('Failed to upload attachment:', error);
+            }
+        }
+
         // Load board on page load
         loadBoard();
 
         // Poll for updates every 10 seconds
         setInterval(loadBoard, 10000);
+
+        document.getElementById('cardAttachment').addEventListener('change', handleAttachmentUpload);
     </script>
 </body>
 </html>

@@ -72,9 +72,15 @@ final class AttachmentController extends AbstractController
             $this->entityManager->persist($attachment);
             $this->entityManager->flush();
 
-            return $this->json($attachment, Response::HTTP_CREATED, [], [
-                'groups' => ['attachment:read']
-            ]);
+            return $this->json([
+                'id' => $attachment->getId(),
+                'filename' => $attachment->getFilename(),
+                'originalName' => $attachment->getOriginalName(),
+                'mimeType' => $attachment->getMimeType(),
+                'path' => $attachment->getPath(),
+                'size' => $attachment->getSize(),
+                'createdAt' => $attachment->getCreatedAt()->format(DATE_ATOM),
+            ], Response::HTTP_CREATED);
 
         } catch (\Exception $e) {
             return $this->json(['error' => 'Failed to upload file'], Response::HTTP_INTERNAL_SERVER_ERROR);
