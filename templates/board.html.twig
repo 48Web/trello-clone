@@ -323,7 +323,16 @@
                 });
 
                 if (!response.ok) {
-                    attachmentsContainer.innerHTML = '<div class="text-danger small">Upload failed.</div>';
+                    let errorMessage = 'Upload failed.';
+                    try {
+                        const payload = await response.json();
+                        if (payload && payload.error) {
+                            errorMessage = payload.error;
+                        }
+                    } catch (e) {
+                        // ignore JSON parsing errors
+                    }
+                    attachmentsContainer.innerHTML = `<div class="text-danger small">${errorMessage}</div>`;
                     return;
                 }
 

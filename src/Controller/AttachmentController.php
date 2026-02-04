@@ -9,6 +9,7 @@ use App\Entity\Card;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\UnableToGenerateTemporaryUrl;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,6 +24,9 @@ final class AttachmentController extends AbstractController
         #[Autowire(service: 'default.storage')]
         private FilesystemOperator $storage,
         private EntityManagerInterface $entityManager,
+        private LoggerInterface $logger,
+        #[Autowire('%kernel.environment%')]
+        private string $appEnv,
     ) {}
 
     #[Route('/cards/{cardId}/attachments', name: 'attachment_upload', methods: ['POST'])]
@@ -83,7 +87,17 @@ final class AttachmentController extends AbstractController
             ], Response::HTTP_CREATED);
 
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Failed to upload file'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $this->logger->error('Attachment upload failed', [
+                'cardId' => $cardId,
+                'error' => $e->getMessage(),
+            ]);
+
+            $message = 'Failed to upload file';
+            if ($this->appEnv !== 'prod') {
+                $message .= ': ' . $e->getMessage();
+            }
+
+            return $this->json(['error' => $message], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
