@@ -109,6 +109,44 @@ final class AttachmentController extends AbstractController
         ]);
     }
 
+    #[Route('/cards/{cardId}/attachments', name: 'attachment_list', methods: ['GET'])]
+    public function list(int $cardId): JsonResponse
+    {
+        $card = $this->entityManager->getRepository(Card::class)->find($cardId);
+        if (!$card) {
+            return $this->json(['error' => 'Card not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $attachments = $this->entityManager->getRepository(Attachment::class)->findBy(
+            ['card' => $card],
+            ['createdAt' => 'DESC']
+        );
+
+        $expiresAt = new \DateTimeImmutable('+15 minutes');
+        $payload = [];
+
+        foreach ($attachments as $attachment) {
+            $url = null;
+            try {
+                $url = $this->storage->temporaryUrl($attachment->getPath(), $expiresAt);
+            } catch (UnableToGenerateTemporaryUrl $exception) {
+                $url = null;
+            }
+
+            $payload[] = [
+                'id' => $attachment->getId(),
+                'originalName' => $attachment->getOriginalName(),
+                'mimeType' => $attachment->getMimeType(),
+                'size' => $attachment->getSize(),
+                'createdAt' => $attachment->getCreatedAt()->format(DATE_ATOM),
+                'url' => $url,
+                'expiresAt' => $url ? $expiresAt->format(DATE_ATOM) : null,
+            ];
+        }
+
+        return $this->json($payload);
+    }
+
     #[Route('/attachments/{id}/url', name: 'attachment_url', methods: ['GET'])]
     public function url(Attachment $attachment): JsonResponse
     {

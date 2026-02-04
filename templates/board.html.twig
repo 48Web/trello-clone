@@ -274,8 +274,7 @@
                     document.getElementById('cardDescription').value = card.description || '';
                     document.getElementById('deleteCardBtn').style.display = 'inline-block';
                     document.getElementById('cardAttachment').value = '';
-                    const attachmentsContainer = document.getElementById('attachments-container');
-                    attachmentsContainer.innerHTML = '<div class="text-muted small">Upload an image to test storage.</div>';
+                    loadAttachments(card.id);
 
                     const modal = new bootstrap.Modal(document.getElementById('cardModal'));
                     modal.show();
@@ -366,13 +365,60 @@
                     item.appendChild(expires);
                 }
 
-                if (attachmentsContainer.querySelector('.text-muted')) {
-                    attachmentsContainer.innerHTML = '';
-                }
-                attachmentsContainer.appendChild(item);
+                await loadAttachments(currentCard.id);
             } catch (error) {
                 attachmentsContainer.innerHTML = '<div class="text-danger small">Upload error.</div>';
                 console.error('Failed to upload attachment:', error);
+            }
+        }
+
+        async function loadAttachments(cardId) {
+            const attachmentsContainer = document.getElementById('attachments-container');
+            attachmentsContainer.innerHTML = '<div class="text-muted small">Loading attachments...</div>';
+
+            try {
+                const response = await fetch(`/api/cards/${cardId}/attachments`);
+                if (!response.ok) {
+                    attachmentsContainer.innerHTML = '<div class="text-danger small">Failed to load attachments.</div>';
+                    return;
+                }
+
+                const attachments = await response.json();
+                if (!Array.isArray(attachments) || attachments.length === 0) {
+                    attachmentsContainer.innerHTML = '<div class="text-muted small">No attachments yet.</div>';
+                    return;
+                }
+
+                attachmentsContainer.innerHTML = '';
+                attachments.forEach(attachment => {
+                    const item = document.createElement('div');
+                    item.className = 'attachment-item';
+
+                    if (attachment.url) {
+                        const link = document.createElement('a');
+                        link.href = attachment.url;
+                        link.textContent = attachment.originalName || `Attachment #${attachment.id}`;
+                        link.target = '_blank';
+                        link.rel = 'noopener';
+                        item.appendChild(link);
+                    } else {
+                        const text = document.createElement('span');
+                        text.textContent = attachment.originalName || `Attachment #${attachment.id}`;
+                        item.appendChild(text);
+                    }
+
+                    if (attachment.expiresAt) {
+                        const expires = document.createElement('span');
+                        expires.className = 'text-muted small';
+                        expires.textContent = `(expires ${new Date(attachment.expiresAt).toLocaleString()})`;
+                        item.appendChild(expires);
+                    }
+
+                    attachmentsContainer.appendChild(item);
+                });
+            } catch (error) {
+                attachmentsContainer.innerHTML = '<div class="text-danger small">Failed to load attachments.</div>';
+                console.error('Failed to load attachments:', error);
             }
         }
 
