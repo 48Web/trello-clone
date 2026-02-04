@@ -21,6 +21,7 @@
         "symfony/messenger": "8.0.*",
         "symfony/mime": "8.0.*",
         "symfony/monolog-bundle": "*",
+        "symfony/process": "8.0.*",
         "symfony/runtime": "8.0.*",
         "symfony/scheduler": "8.0.*",
         "symfony/serializer": "8.0.*",
